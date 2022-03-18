@@ -102,6 +102,7 @@ namespace Notes_API.Controllers
         /// <response code="200">Daca totul e ok</response>
         /// <response code="404">Daca nu se gaseste resursa</response>
         /// <response code="500">Daca este o problema pe server</response>
+        [HttpDelete]
         public IActionResult DeleteNote([FromRoute] Guid id)
         {
             var toDelete = _notes.FirstOrDefault(n => n.Id == id);
