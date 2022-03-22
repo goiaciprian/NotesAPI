@@ -89,10 +89,25 @@ namespace Notes_API.Controllers
             var index = _notes.FindIndex(n => n.Id == id);
             if (index == -1)
                 return NotFound();
+                //return CreateNote(note);
+
             note.Id = id;
             _notes[index] = note;
 
             return Ok(note);
+        }
+
+        [HttpPut("{ownerId}/{noteId}")]
+        public IActionResult UpdateNoteByNoteIdAndOwnerId([FromRoute] Guid noteId, [FromRoute] Guid ownerId, Note note)
+        {
+            var index = _notes.FindIndex(n => n.Id == noteId && n.OwnerId == ownerId);
+            if (index == -1)
+                return NotFound();
+            note.Id = noteId;
+            note.OwnerId = ownerId;
+            _notes[index] = note;
+            return Ok(note);
+
         }
 
         /// <summary>
@@ -102,7 +117,7 @@ namespace Notes_API.Controllers
         /// <response code="200">Daca totul e ok</response>
         /// <response code="404">Daca nu se gaseste resursa</response>
         /// <response code="500">Daca este o problema pe server</response>
-        [HttpDelete]
+        [HttpDelete("{id}")]
         public IActionResult DeleteNote([FromRoute] Guid id)
         {
             var toDelete = _notes.FirstOrDefault(n => n.Id == id);
@@ -110,6 +125,29 @@ namespace Notes_API.Controllers
                 return NotFound();
             _notes.Remove(toDelete);
             return Ok(toDelete);
+        }
+
+
+        [HttpDelete("{ownerId}/{noteId}")]
+        public IActionResult DeleteNoteByNoteIdAndOwnerId([FromRoute] Guid noteId, [FromRoute] Guid ownerId)
+        {
+            var note = _notes.FirstOrDefault(n => n.Id == noteId && n.OwnerId == ownerId);
+            if (note == null)
+                return NotFound();
+            _notes.Remove(note);
+            return Ok(note);
+        }
+
+        [HttpDelete("own/{ownerId}")]
+        public IActionResult DeleteAllByOwnerId([FromRoute] Guid ownerId)
+        {
+            var notesList = _notes.Where(n => n.OwnerId == ownerId).ToList();
+
+            if (notesList.Count == 0)
+                return NotFound();
+
+            _notes.RemoveAll(n => n.OwnerId == ownerId);
+            return Ok(notesList);
         }
     }
 }

@@ -61,6 +61,19 @@ namespace Notes_API.Controllers
             return CreatedAtRoute("GetOwnerById", new { id = owner.Id }, owner);
         }
 
+        [HttpPost("{id}")]
+        public IActionResult UpdateOwner([FromRoute] Guid id, [FromBody] Owner owner)
+        {
+            var ownerFoundIndex = _owners.FindIndex(o => o.Id == id);
+            if(ownerFoundIndex == -1)
+            {
+                return NotFound();
+            }
+            owner.Id = id;
+            _owners[ownerFoundIndex] = owner;
+            return Ok(owner);
+
+        }
 
         /// <summary>
         /// Sterge 1 owner
