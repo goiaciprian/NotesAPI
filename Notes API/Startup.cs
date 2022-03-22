@@ -6,6 +6,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Notes_API.Services;
+using Notes_API.Services.OwnerService;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -27,6 +29,8 @@ namespace Notes_API
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddTransient<INoteCollectionService, NoteCollectionService>();
+            services.AddTransient<IOwnerService,OwnerService>();
             services.AddSwaggerGen((c) =>
             {
                 var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";

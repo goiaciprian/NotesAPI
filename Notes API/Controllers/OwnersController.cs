@@ -1,9 +1,7 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Notes_API.Models;
+using Notes_API.Services.OwnerService;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Notes_API.Controllers
 {
@@ -11,12 +9,13 @@ namespace Notes_API.Controllers
     [ApiController]
     public class OwnersController : ControllerBase
     {
-        private static List<Owner> _owners = new List<Owner>()
+        private IOwnerService _ownerService;
+
+        public OwnersController(IOwnerService ownerService)
         {
-            new Owner() { Id = new Guid("F7C707CC-BBDE-42D5-ABC0-8CD6FC6A09EF"), Name = "Owner 1"},
-            new Owner() { Id = Guid.NewGuid(), Name = "Owner 2"},
-            new Owner() { Id = Guid.NewGuid(), Name = "Owner 3"}
-        };
+            _ownerService = ownerService;
+        }
+        
 
         /// <summary>
         /// Retirneaza toti ownerii
@@ -27,7 +26,7 @@ namespace Notes_API.Controllers
         [HttpGet]
         public IActionResult GetOwners()
         {
-            return Ok(_owners);
+            return Ok(_ownerService.GetAll());
         }
 
         /// <summary>
@@ -40,7 +39,7 @@ namespace Notes_API.Controllers
         [HttpGet("{id}", Name = "GetOwnerById")]
         public IActionResult GetOwnerById([FromRoute] Guid id)
         {
-            var owner = _owners.FirstOrDefault(o => o.Id == id);
+            var owner = _ownerService.Get(id);
             if (owner == null)
                 return NotFound();
             return Ok(owner);
@@ -56,21 +55,18 @@ namespace Notes_API.Controllers
         [HttpPost]
         public IActionResult CreateOwner([FromBody] Owner owner)
         {
-            owner.Id = Guid.NewGuid();
-            _owners.Add(owner);
-            return CreatedAtRoute("GetOwnerById", new { id = owner.Id }, owner);
+            return CreatedAtRoute("GetOwnerById", new { id = owner.Id }, _ownerService.Create(owner));
         }
 
         [HttpPost("{id}")]
         public IActionResult UpdateOwner([FromRoute] Guid id, [FromBody] Owner owner)
         {
-            var ownerFoundIndex = _owners.FindIndex(o => o.Id == id);
-            if(ownerFoundIndex == -1)
+            var ownerFoundIndex = _ownerService.Update(id, owner);
+            if(ownerFoundIndex == null)
             {
                 return NotFound();
             }
             owner.Id = id;
-            _owners[ownerFoundIndex] = owner;
             return Ok(owner);
 
         }
@@ -85,10 +81,9 @@ namespace Notes_API.Controllers
         [HttpDelete("{id}")]
         public IActionResult DeleteOwner([FromRoute] Guid id)
         {
-            var toDelete = _owners.First(o => o.Id == id);
+            var toDelete = _ownerService.Delete(id);
             if (toDelete == null)
                 return NotFound();
-            _owners.Remove(toDelete);
             return Ok(toDelete);
         }
     }
