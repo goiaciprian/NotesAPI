@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using MongoDB.Bson;
 using Notes_API.Models;
 using Notes_API.Services;
 using System;
+using System.Threading.Tasks;
 
 namespace Notes_API.Controllers
 {
@@ -23,9 +25,9 @@ namespace Notes_API.Controllers
         /// <response code="200">Daca totul e ok</response>
         /// <response code="500">Daca este o problema pe server</response>
         [HttpGet]
-        public IActionResult GetNotes()
+        public async Task<IActionResult> GetNotes()
         {
-            return Ok(_noteService.GetAll());
+            return Ok(await _noteService.GetAll());
         }
 
         /// <summary>
@@ -36,9 +38,9 @@ namespace Notes_API.Controllers
         /// <response code="404">Daca nu se gaseste resursa</response>
         /// <response code="500">Daca este o problema pe server</response>
         [HttpGet("{id}", Name = "GetNoteById")]
-        public IActionResult GetNoteById([FromRoute] Guid id)
+        public async Task<IActionResult> GetNoteById([FromRoute] Guid id)
         {
-            var note = _noteService.Get(id);
+            var note = await _noteService.Get(id);
             if (note == null)
                 return NotFound();
             return Ok(note);
@@ -52,9 +54,9 @@ namespace Notes_API.Controllers
         /// <response code="200">Daca totul e ok</response>
         /// <response code="500">Daca este o problema pe server</response>
         [HttpGet("own/{ownerId}")]
-        public IActionResult GetNotesByOwnerId([FromRoute] Guid ownerId)
+        public async Task<IActionResult> GetNotesByOwnerId([FromRoute] Guid ownerId)
         {
-            return Ok(_noteService.GetNotesByOwnerId(ownerId));
+            return Ok(await _noteService.GetNotesByOwnerId(ownerId));
         }
 
         /// <summary>
@@ -64,9 +66,10 @@ namespace Notes_API.Controllers
         /// <response code="200">Daca totul e ok</response>
         /// <response code="500">Daca este o problema pe server</response>
         [HttpPost]
-        public IActionResult CreateNote([FromBody] Note note)
+        public async Task<IActionResult> CreateNote([FromBody] Note note)
         {
-            return CreatedAtRoute("GetNoteById", new { id = note.Id }, _noteService.Create(note));
+            var newNote = await _noteService.Create(note);
+            return CreatedAtRoute("GetNoteById", new { id = newNote.Id }, newNote);
         }
 
 
@@ -77,16 +80,17 @@ namespace Notes_API.Controllers
         /// <response code="200">Daca totul e ok</response>
         /// <response code="404">Daca nu se gaseste resursa</response>
         /// <response code="500">Daca este o problema pe server</response>
-        [HttpPut]
-        public IActionResult UpdateNote([FromRoute] Guid id, [FromBody] Note note)
+        [HttpPost("{id}")]
+        public async Task<IActionResult> UpdateNote([FromRoute] Guid id, [FromBody] Note note)
         {
-            return Ok(_noteService.Update(id, note));
+            note.Id = id;
+            return Ok(await _noteService.Update(id, note));
         }
 
-        [HttpPut("{ownerId}/{noteId}")]
-        public IActionResult UpdateNoteByNoteIdAndOwnerId([FromRoute] Guid noteId, [FromRoute] Guid ownerId, Note note)
+        [HttpPut("own/{ownerId}/{noteId}")]
+        public async Task<IActionResult> UpdateNoteByNoteIdAndOwnerId([FromRoute] Guid noteId, [FromRoute] Guid ownerId, Note note)
         {
-            return Ok(_noteService.UpdateNoteByNoteIdAndOwnerId(noteId, ownerId, note));
+            return Ok(await _noteService.UpdateNoteByNoteIdAndOwnerId(noteId, ownerId, note));
         }
 
         /// <summary>
@@ -97,33 +101,28 @@ namespace Notes_API.Controllers
         /// <response code="404">Daca nu se gaseste resursa</response>
         /// <response code="500">Daca este o problema pe server</response>
         [HttpDelete("{id}")]
-        public IActionResult DeleteNote([FromRoute] Guid id)
+        public async Task<IActionResult> DeleteNote([FromRoute] Guid id)
         {
-            var toDelete = _noteService.Delete(id);
+            var toDelete = await _noteService.Delete(id);
             if (toDelete == null)
                 return NotFound();
             return Ok(toDelete);
         }
 
 
-        [HttpDelete("{ownerId}/{noteId}")]
-        public IActionResult DeleteNoteByNoteIdAndOwnerId([FromRoute] Guid noteId, [FromRoute] Guid ownerId)
+        [HttpDelete("own/{ownerId}/{noteId}")]
+        public async Task<IActionResult> DeleteNoteByNoteIdAndOwnerId([FromRoute] Guid noteId, [FromRoute] Guid ownerId)
         {
-            var note = _noteService.DeleteNoteByNoteIdAndOwnerId(noteId, ownerId);
+            var note = await _noteService.DeleteNoteByNoteIdAndOwnerId(noteId, ownerId);
             if (note == null)
                 return NotFound();
             return Ok(note);
         }
 
         [HttpDelete("own/{ownerId}")]
-        public IActionResult DeleteAllByOwnerId([FromRoute] Guid ownerId)
+        public async Task<IActionResult> DeleteAllByOwnerId([FromRoute] Guid ownerId)
         {
-            var notesList = _noteService.DeleteAllByOwnerId(ownerId);
-
-            if (notesList.Count == 0)
-                return NotFound();
-
-            return Ok(notesList);
+            return Ok(await _noteService.DeleteAllByOwnerId(ownerId));
         }
     }
 }

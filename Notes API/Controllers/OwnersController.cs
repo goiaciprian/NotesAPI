@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using MongoDB.Bson;
 using Notes_API.Models;
 using Notes_API.Services.OwnerService;
 using System;
+using System.Threading.Tasks;
 
 namespace Notes_API.Controllers
 {
@@ -24,9 +26,9 @@ namespace Notes_API.Controllers
         /// <response code="200">Daca totul e ok</response>
         /// <response code="500">Daca este o problema pe server</response>
         [HttpGet]
-        public IActionResult GetOwners()
+        public async Task<IActionResult> GetOwners()
         {
-            return Ok(_ownerService.GetAll());
+            return Ok(await _ownerService.GetAll());
         }
 
         /// <summary>
@@ -37,9 +39,9 @@ namespace Notes_API.Controllers
         /// <response code="404">Daca nu se gaseste resursa</response>
         /// <response code="500">Daca este o problema pe server</response>
         [HttpGet("{id}", Name = "GetOwnerById")]
-        public IActionResult GetOwnerById([FromRoute] Guid id)
+        public async Task<IActionResult> GetOwnerById([FromRoute] Guid id)
         {
-            var owner = _ownerService.Get(id);
+            var owner = await _ownerService.Get(id);
             if (owner == null)
                 return NotFound();
             return Ok(owner);
@@ -53,20 +55,21 @@ namespace Notes_API.Controllers
         /// <response code="200">Daca totul e ok</response>
         /// <response code="500">Daca este o problema pe server</response>
         [HttpPost]
-        public IActionResult CreateOwner([FromBody] Owner owner)
+        public async Task<IActionResult> CreateOwner([FromBody] Owner owner)
         {
-            return CreatedAtRoute("GetOwnerById", new { id = owner.Id }, _ownerService.Create(owner));
+            var newOwner = await _ownerService.Create(owner);
+            return CreatedAtRoute("GetOwnerById", new { id = newOwner.Id }, newOwner);
         }
 
         [HttpPost("{id}")]
-        public IActionResult UpdateOwner([FromRoute] Guid id, [FromBody] Owner owner)
+        public async Task<IActionResult> UpdateOwner([FromRoute] Guid id, [FromBody] Owner owner)
         {
-            var ownerFoundIndex = _ownerService.Update(id, owner);
+            owner.Id = id;
+            var ownerFoundIndex = await _ownerService.Update(id, owner);
             if(ownerFoundIndex == null)
             {
                 return NotFound();
             }
-            owner.Id = id;
             return Ok(owner);
 
         }
@@ -79,9 +82,9 @@ namespace Notes_API.Controllers
         /// <response code="404">Daca nu se gaseste resursa</response>
         /// <response code="500">Daca este o problema pe server</response>
         [HttpDelete("{id}")]
-        public IActionResult DeleteOwner([FromRoute] Guid id)
+        public async Task<IActionResult> DeleteOwner([FromRoute] Guid id)
         {
-            var toDelete = _ownerService.Delete(id);
+            var toDelete = await _ownerService.Delete(id);
             if (toDelete == null)
                 return NotFound();
             return Ok(toDelete);

@@ -1,53 +1,51 @@
-﻿using Notes_API.Models;
+﻿using MongoDB.Bson;
+using MongoDB.Driver;
+using Notes_API.Models;
+using Notes_API.Settings;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Notes_API.Services.OwnerService
 {
     public class OwnerService : IOwnerService
     {
-        private static List<Owner> _owners = new List<Owner>()
-        {
-            new Owner() { Id = new Guid("F7C707CC-BBDE-42D5-ABC0-8CD6FC6A09EF"), Name = "Owner 1"},
-            new Owner() { Id = Guid.NewGuid(), Name = "Owner 2"},
-            new Owner() { Id = Guid.NewGuid(), Name = "Owner 3"}
-        };
+        private readonly IMongoCollection<Owner> _owners;
 
-        public Owner Create(Owner owner)
+        public OwnerService(IMongoDBSettings settings)
+        {
+            var client = new MongoClient(settings.ConnectionString);
+            var database = client.GetDatabase(settings.DatabaseName);
+            _owners = database.GetCollection<Owner>(settings.OwnerCollectionName);
+        }
+
+        public async Task<Owner> Create(Owner owner)
         {
             owner.Id = Guid.NewGuid();
-            _owners.Add(owner);
+            await _owners.InsertOneAsync(owner);
             return owner;
         }
 
-        public Owner Delete(Guid Id)
+        public async Task<Owner> Delete(Guid Id)
         {
-            var owner = _owners.First(o => o.Id == Id);
-            if (owner == null)
-                return null;
-            _owners.Remove(owner);
-            return owner;
+            return await _owners.FindOneAndDeleteAsync(o => o.Id == Id);
         }
 
-        public Owner Get(Guid Id)
+        public async Task<Owner> Get(Guid Id)
         {
-            return _owners.First(o => o.Id == Id);
+            return await (await _owners.FindAsync(o => o.Id == Id)).FirstOrDefaultAsync();
         }
 
-        public List<Owner> GetAll()
+        public async Task<List<Owner>> GetAll()
         {
-            return _owners;
+            return await (await _owners.FindAsync(n => true)).ToListAsync();
         }
 
-        public Owner Update(Guid Id, Owner owner)
+        public async Task<Owner> Update(Guid Id, Owner owner)
         {
-            var ownerIndex = _owners.FindIndex(o => o.Id == Id);
-            if (ownerIndex == -1)
-                return null;
-            owner.Id = Id;
-            _owners[ownerIndex] = owner;
-            return owner;
+            return await _owners.FindOneAndReplaceAsync(o => o.Id == Id, owner);
+
         }
     }
 }

@@ -1,4 +1,6 @@
-﻿using System;
+﻿using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace Notes_API.Models
@@ -7,7 +9,7 @@ namespace Notes_API.Models
     {
         public Guid? Id { get; set; }
         [Required(ErrorMessage = "owner id required.")]
-        public Guid? OwnerId { get; set; }
+        public Guid OwnerId { get; set; }
         [Required(ErrorMessage = "title is required")]
         public string Title { get; set; }
         [Required(ErrorMessage = "description is required")]
